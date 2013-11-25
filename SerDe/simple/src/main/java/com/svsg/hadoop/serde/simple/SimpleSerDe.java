@@ -9,20 +9,18 @@ import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.lazy.LazyUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 @SuppressWarnings("UnusedDeclaration")
 public class SimpleSerDe extends AbstractSerDe {
     LazySimpleSerDe.SerDeParameters serdeParams = null;
-    SimpleInspector inspector = null;
+    StructObjectInspector inspector = null;
 
     public static final Log LOG = LogFactory.getLog(SimpleSerDe.class
             .getName());
@@ -54,11 +52,10 @@ public class SimpleSerDe extends AbstractSerDe {
         Text write = new Text();
         StringBuilder row = new StringBuilder();
         @SuppressWarnings("unchecked")
-        Map<String, Object> inputObject = (Map<String, Object>) o;
+        ArrayList<Object> inputObject = (ArrayList<java.lang.Object>) o;
         List<String> columnNames = serdeParams.getColumnNames();
         for (int i = 0; i < columnNames.size(); i++) {
-            String column = columnNames.get(i);
-            Object columnValue = inputObject.get(column);
+            Object columnValue = inputObject.get(i);
             if (columnValue != null) {
                 row.append(columnValue.toString());
             }
@@ -94,10 +91,10 @@ public class SimpleSerDe extends AbstractSerDe {
 //        String lines[] = input.split("\n");
 //        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>(lines.length);
 //        for (String line : lines) {
-        Map<String, Object> rowData = new HashMap<String, Object>();
+        ArrayList<Object> rowData = new ArrayList<Object>();
         String[] fields = input.split("\u0002");
         for (int i = 0; i < serdeParams.getColumnNames().size(); i++) {
-            rowData.put(serdeParams.getColumnNames().get(i), deserialize((PrimitiveTypeInfo) serdeParams.getColumnTypes().get(i), fields[i]));
+            rowData.add(deserialize((PrimitiveTypeInfo) serdeParams.getColumnTypes().get(i), fields[i]));
         }
 //            data.add(rowData);
 //        }

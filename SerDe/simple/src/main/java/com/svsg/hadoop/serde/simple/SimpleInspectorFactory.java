@@ -1,8 +1,11 @@
 package com.svsg.hadoop.serde.simple;
 
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
@@ -13,28 +16,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SimpleInspectorFactory {
 
     static ConcurrentHashMap<TypeInfo, ObjectInspector> cachedPrimitiveObjectInspector = new ConcurrentHashMap<TypeInfo, ObjectInspector>();
-    static ConcurrentHashMap<ArrayList<Object>, SimpleInspector> cachedSimpleObjectInspector = new ConcurrentHashMap<ArrayList<Object>, SimpleInspector>();
 
-    public static SimpleInspector createStructInspector(List<String> columnNames, List<TypeInfo> typeInfos) {
+    public static StructObjectInspector createStructInspector(List<String> columnNames, List<TypeInfo> typeInfos) {
 
         ArrayList<ObjectInspector> columnObjectInspectors = new ArrayList<ObjectInspector>(typeInfos.size());
         for (TypeInfo typeInfo : typeInfos) {
             columnObjectInspectors.add(SimpleInspectorFactory.createObjectInspector(typeInfo));
         }
-        return (createObjectInspector(columnNames, columnObjectInspectors, typeInfos));
+        return ObjectInspectorFactory.getStandardStructObjectInspector(columnNames, columnObjectInspectors);
 
-    }
-
-    private static SimpleInspector createObjectInspector(List<String> columnNames,
-                                                         ArrayList<ObjectInspector> columnObjectInspectors,
-                                                         List<TypeInfo> typeInfos) {
-        ArrayList<Object> key = new ArrayList<Object>();
-        key.add(columnNames);
-        key.add(typeInfos);
-        if (cachedSimpleObjectInspector.contains(key)) {
-            return cachedSimpleObjectInspector.get(key);
-        }
-        return cachedSimpleObjectInspector.put(key, new SimpleInspector(columnNames, columnObjectInspectors));
     }
 
     private static ObjectInspector createObjectInspector(TypeInfo typeInfo) {
@@ -51,8 +41,15 @@ public class SimpleInspectorFactory {
                         pti.getPrimitiveCategory().equals(PrimitiveCategory.FLOAT) ?
                                 PrimitiveCategory.DOUBLE : pti.getPrimitiveCategory());
                 break;
-            default:
-                throw new IllegalArgumentException("Simple SerDe only support primitive types");
+            case LIST:
+                SimpleInspectorFactory.createObjectInspector(((ListTypeInfo) typeInfo).getListElementTypeInfo());
+                break;
+            case MAP:
+                break;
+            case STRUCT:
+                break;
+            case UNION:
+                break;
         }
         return cachedPrimitiveObjectInspector.put(typeInfo, inspector);
     }
