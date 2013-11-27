@@ -17,6 +17,13 @@ public class SimpleInspectorFactory {
 
     static ConcurrentHashMap<TypeInfo, ObjectInspector> cachedPrimitiveObjectInspector = new ConcurrentHashMap<TypeInfo, ObjectInspector>();
 
+    /**
+     * In this factory,we extract every Inspector we need and add it to our SerDe inspector. for this purpose we need type of each column to find a propert inspector
+     * and columns name for handling the inquiry for the fields.
+     * @param columnNames name of columns
+     * @param typeInfos type of the fields
+     * @return inspector of SerDe
+     */
     public static StructObjectInspector createStructInspector(List<String> columnNames, List<TypeInfo> typeInfos) {
 
         ArrayList<ObjectInspector> columnObjectInspectors = new ArrayList<ObjectInspector>(typeInfos.size());
